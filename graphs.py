@@ -1,6 +1,7 @@
 import pandas            as pd
 import numpy             as np
 import plotly.graph_objs as go
+import matplotlib.pyplot as plt
 
 ### Setting Simulation Variables ###
 timeSlotStep       = 0.01
@@ -14,13 +15,13 @@ rxRange            = np.arange(1,7                                              
 ### Setting the analysis ###
 # evalMetricName     = 'Channel Capacity (bits)'
 # evalMetricName     = 'Gain (dB)'
-# evalMetricName     = 'SNR (dB)'
-evalMetricName     = 'BER'
+evalMetricName     = 'SNR (dB)'
+# evalMetricName     = 'BER'
 
 # referenceVariable  = 'Time Slot (s)'
-referenceVariable      = 'Range'
+referenceVariable      = 'Range'                                              # Variable that will be showed in the text
 
-referenceNumber    = 1
+referenceNumber    = 6                                                        # The value for the referenceVariable that will be considered on the results
 
 # xAxisVariable      = rxRange                                                # The opposite of referenceVariable
 xAxisVariable      = freq
@@ -45,6 +46,7 @@ resultsMean        = results.groupby(['Freq (Hz)', 'Range', 'Time Slot (s)']).me
 
 ### Graphs of the evaluation Metric ###
 fig = go.Figure()
+figs, ax = plt.subplots()
 
 # for f, c in zip(freq, lineColor):
     
@@ -70,6 +72,14 @@ for ts, c in zip(timeSlot, lineColor):
         line_color = c,
         name       = str(ts) + " s",                                                              # If frequency is the main variable
     ))
+
+    # ax.semilogy(np.asarray( evalMetric['SNR (dB)'] ), np.asarray( evalMetric[evalMetricName] ) ) # , label=legendas[i], linestyle=estilos_linha[i]
+
+# ax.set(xlabel='SNR (dB)', ylabel='BER')
+# ax.grid()
+# ax.legend(loc=1)
+# fig.savefig("/home/ittalo/Documentos/Projeto Comunicação Molecular/Imagens/SISO/SNRxBER.png")
+# plt.show()
 
 fig.update_traces(mode='lines+markers', marker_size=5)
 

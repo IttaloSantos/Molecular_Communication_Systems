@@ -680,7 +680,6 @@ public:
 
 		return diffusions;
 	};
-
 	double Na_o_diffusionEquation(int id1, int id2, int gap_junction) {
 		double vol_cell = (4 / 3) * (PI * pow((diameter_cell / 2), 3));
 		double diff;
@@ -1667,7 +1666,7 @@ void simulation(int destination, double frequency, string topology, double time_
 			// CHOICE OF THE REACTIONS
 			diffusion_error = false;
 
-			// INTRACELULAR CALCIUM REACTIONS
+			/* INTRACELULAR CALCIUM REACTIONS */
 			if (current_time_calcium<tau_max) 
 			{	
 				choice 		= gillespie.calciumReactions();
@@ -1780,22 +1779,6 @@ void simulation(int destination, double frequency, string topology, double time_
 									tecido.accumulate( tecido.getId(tx_x + destination, tx_y, tx_z) , "tx_rx_reactions", 1);
 								}
 								// Modulation and Demodulation - End
-
-								// Modulation - Begin
-								if (current_time_modulation >= time_slot)
-								{
-									// Transmitter
-									Tx_states.push_back(tecido.modulation(tx_x, tx_y, tx_z));
-									
-									tecido.rxtx_concentration["tx"].push_back(tecido.get(tx_x, tx_y, tx_z, "C_variation"));
-									tecido.rxtx_concentration["rx"].push_back(tecido.get(tx_x + destination, tx_y, tx_z, "C_variation"));				
-
-									tecido.set(tx_x, tx_y, tx_z, "C_variation", 0);
-									tecido.set(tx_x + destination, tx_y, tx_z, "C_variation", 0);
-
-									current_time_modulation = 0;
-								}
-								// Modulation - End
 							} 
 							else 
 							{
@@ -1823,7 +1806,7 @@ void simulation(int destination, double frequency, string topology, double time_
 				}
 			}
 		
-			//INTERCELLULAR SODIUM REACTIONS
+			/* INTERCELLULAR SODIUM REACTIONS */
 			// if (current_time_sodium_inter<tau_max) 
 			// {
 			//  	choice = gillespie.sodiumInter();
@@ -1852,7 +1835,7 @@ void simulation(int destination, double frequency, string topology, double time_
 			//  	if (diffusion_error) current_time_sodium_inter -= (tau_sodium_inter);
 			//  }
 
-			// NCX - Reaction
+			/* NCX - Reaction */
 			if (current_time_NCX < tau_max) 
 			{
 				choice = gillespie.NCX_reaction(NCX_mode_vector);
@@ -1884,7 +1867,7 @@ void simulation(int destination, double frequency, string topology, double time_
 				current_time_NCX_AUX += tau_NCX;
 			}
 
-			// NKATP Reaction
+			/* NKATP Reaction */
 			// if (current_time_NKATP < tau_max) 
 			// {
 			// 	choice = gillespie.NKATP_reaction();
@@ -1906,7 +1889,7 @@ void simulation(int destination, double frequency, string topology, double time_
 			// 	// cout << setprecision(10) << "Tau MAX: " << tau_max << endl;
 			// }
 
-			// CP Reaction
+			/* CP Reaction */
 			if (current_time_CP < tau_max) 
 			{
 				choice = gillespie.CP_reaction();
@@ -1927,7 +1910,25 @@ void simulation(int destination, double frequency, string topology, double time_
 				// cout << "Tempo: " << tau_CP << endl;
 			}
 
+			/* Getting Tau Max and Updating time for new iteration */
 			//cout << setprecision(5) << "C = " << tecido.get(choice[1], choice[2], choice[3], "C") << endl;
+
+			// Modulation - Begin
+			if (current_time_modulation >= time_slot)
+			{
+				// Transmitter
+				Tx_states.push_back(tecido.modulation(tx_x, tx_y, tx_z));
+				
+				tecido.rxtx_concentration["tx"].push_back(tecido.get(tx_x, tx_y, tx_z, "C_variation"));
+				tecido.rxtx_concentration["rx"].push_back(tecido.get(tx_x + destination, tx_y, tx_z, "C_variation"));				
+
+				tecido.set(tx_x, tx_y, tx_z, "C_variation", 0);
+				tecido.set(tx_x + destination, tx_y, tx_z, "C_variation", 0);
+
+				current_time_modulation = 0;
+			}
+			// Modulation - End
+
 			if (tau_flag == false)
 			{
 				tau_max  = max(tau_calcium, max(tau_calcium_extra, max(tau_sodium_inter, max(tau_sodium_extra, max(tau_NCX, max(tau_NKATP, tau_CP))))));
@@ -1996,7 +1997,7 @@ void simulation(int destination, double frequency, string topology, double time_
 		cdatafile.close();
 	}
 
-	/* ### CALCULATING GAIN ### */
+	/* ### CALCULATING GAIN AND SNR ### */
 
 	double acc_c_tx = accumulate(C_tx.begin(), C_tx.end(), 0.0);
 	double acc_c_rx = accumulate(C_rx.begin(), C_rx.end(), 0.0);
@@ -2006,7 +2007,7 @@ void simulation(int destination, double frequency, string topology, double time_
 	double calc_SNR = 10 * log10(E_signal / E_noise);
 	double calc_gain = 10 * log10((acc_c_rx / C_rx.size()) / ((acc_c_tx) / C_tx.size()));
 
-	/* ### END GAIN ### */
+	/* ### END GAIN AND SNR ### */
 
 	/* ### DEMODULATION - BEGIN ### */
 
@@ -2054,11 +2055,11 @@ void simulation(int destination, double frequency, string topology, double time_
 	if (py[1] == 0) py[1] = 0.00000000001;
 	py[0] = 1 - py[1];
 
-	for (int i = 0; i < ( time_size - time_slots_number ); i++)
+	for (int i = 0; i < time_size; i++) // - time_slots_number
 	{
-		pyx_joint[ Rx_states[ i + time_slots_number ] ][ Tx_states[i] ]++;
+		pyx_joint[ Rx_states[i] ][ Tx_states[i] ]++; // + time_slots_number
 
-		if ( Rx_states[ i + time_slots_number ] != Tx_states[i] )
+		if ( Rx_states[i] != Tx_states[i] ) // + time_slots_number
 		{
 			BER_counter++;
 		}
@@ -2101,8 +2102,8 @@ void simulation(int destination, double frequency, string topology, double time_
 /* MAIN */
 int main()
 {
-	int simulation_number = 3;
-	vector<double> time_slot{0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01}; //s
+	int simulation_number = 10;
+	vector<double> time_slot{0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1}; //s
 	vector<double> frequencies{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1}; //[Hz]
 	string topology = "RD";
 	// int destination = 1;
