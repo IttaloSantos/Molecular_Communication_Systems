@@ -13,30 +13,30 @@ timeSlot           = np.around(np.arange(timeSlotBegin, timeSlotEnd, timeSlotSte
 rxRange            = np.arange(1,7                                                   )
 
 ### Setting the analysis ###
-# evalMetricName     = 'Channel Capacity (bits)'
+evalMetricName     = 'Channel Capacity (bits)'
 # evalMetricName     = 'Gain (dB)'
-evalMetricName     = 'SNR (dB)'
+# evalMetricName     = 'SNR (dB)'
 # evalMetricName     = 'BER'
 
 # referenceVariable  = 'Time Slot (s)'
-referenceVariable      = 'Range'                                              # Variable that will be showed in the text
+referenceVariable  = 'Range'                                              # Variable that will be showed in the text
 
-referenceNumber    = 6                                                        # The value for the referenceVariable that will be considered on the results
+referenceNumber    = 6                                                    # The value for the referenceVariable that will be considered on the results
 
-# xAxisVariable      = rxRange                                                # The opposite of referenceVariable
+# xAxisVariable      = rxRange                                              # The opposite of referenceVariable
 xAxisVariable      = freq
 
-# xAxisName          = 'r (#celulas)'                                         # The same as xAxisVariable
+# xAxisName          = 'r (#celulas)'                                       # The same as xAxisVariable
 xAxisName          = 'f (Hz)'
 
                     #   Red        Orange     Yellow     Green      Brown      Blue      Blue Sky    Pink     Green Olive   Black               
 lineColor          = ['#FF0000', '#FFA500', '#FFFF00', '#008000', '#8B4513', '#0000FF', '#00BFFF', '#FF1493', '#808000', '#000000']  # 10 colors for Time Slot and Frequency
 
 ### Select the file ###
-# fileName           = "results_NCX_CP.csv"
-# fileName           = "results_NCX_CP_04.csv"
-# fileName           = "results_NCX_CP_05.csv"
-fileName           = "results_NCX_NKP.csv"
+fileName           = "C.csv"
+# fileName           = "NCX_Na.csv"
+# fileName           = "NCX_Na_NKP_CP.csv"
+# fileName           = "NCX_NKP_CP.csv"
 
 ### Creating DataFrame from CSV file ###
 results            = pd.read_csv("results/" + fileName                               )

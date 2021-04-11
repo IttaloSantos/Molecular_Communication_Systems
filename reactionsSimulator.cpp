@@ -2068,12 +2068,22 @@ void simulation(int destination, double frequency, string topology, double time_
 
 	for (int y = 0; y < bit_number; y++) // Number of y1 given x0; Number of y1 given x1; Number of y0 given x0; Number of y0 given x1
 	{
+			if (px[y] == 0)
+			{
+				px[y] 	  = 0.00000000001;
+				px[1 - y] = 1 - px[y];
+			}
+			if (py[y] == 0)
+			{
+				py[y] 	  = 0.00000000001;
+				py[1 - y] = 1 - py[y];
+			}
+
 		for (int x = 0; x < bit_number; x++)
 		{
 			pyx_joint[y][x] = pyx_joint[y][x] / time_size;
-			// cout << "Pyx_joint: " << pyx_joint[y][x] << endl;
-			// cout << "Py: " << py[y] << endl;
-			if (pyx_joint[y][x] == 0) pyx_joint[y][x] = 0.00000000001;
+
+			if (pyx_joint[y][x] == 0) pyx_joint[y][x] = 0.00000000001;			
 
 			I_xy.push_back( px[x] * pyx_joint[y][x] * log2( pyx_joint[y][x]/py[y] ) ); // Mutual Information
 		}
