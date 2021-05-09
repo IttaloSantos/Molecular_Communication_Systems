@@ -435,16 +435,21 @@ public:
 		double Rx_p = get(Rx_id, "tx_rx_reactions") / total_reactions;
 		double CIR[time_size]; // Channel Impulse Response
 		
-		random_device rd;
-    	mt19937 gen(rd());
+		int    alpha = static_cast<int>( max_value(rxtx_concentration["rx"].begin(), rxtx_concentration["rx"].size()) / ALPHA );
+
+		cout << "aplha = " << alpha << endl;
+
+		// double alpha = static_cast<int>( ( max_element(rxtx_concentration["rx"].begin, rxtx_concentration["rx"].end) + max_element(rxtx_concentration["tx"].begin, rxtx_concentration["tx"].end) ) / (2 * ALPHA);
+
+		default_random_engine generator;
+
+		gamma_distribution<> distribution(alpha, Rx_p ); // + Tx_p
 
 		// cout << setprecision(5) << rx_reactions / total_reactions * Tx_p[j] << ",";
 
 		for (int k = 0; k < time_size; k++)
-		{
-			gamma_distribution<> distribution(static_cast<int>( ( rxtx_concentration["rx"][k] + rxtx_concentration["tx"][k] ) / (2 * ALPHA) ), Rx_p + Tx_p); //
-			
-			CIR[k] = distribution(gen);
+		{	
+			CIR[k] = distribution(generator);
 			cout << CIR[k];
 			
 			Rx_states[k] = modulation(CIR[k]*rxtx_concentration["tx"][k]);// + CIR[i][1][k]);
@@ -476,6 +481,17 @@ public:
 		}
 
 		return sum;
+	}
+
+	double max_value(vector<double>::iterator first, int size)
+	{
+		double max = 0;
+
+		for (int i = 0; i < size; i++)
+			if ( *(first + i) > max )	
+				max = *(first + i);
+
+		return max;
 	}
 
 };
@@ -2031,10 +2047,9 @@ void simulation(int destination, double frequency, string topology, double time_
 	int rx_x = tx_x + destination;
 	
 	double px[bit_number] = {}, py[bit_number] = {}, pyx_joint[bit_number][bit_number] = {}, BER_counter = 0;
-	double var, mean_channel_capacity, mean_BER;
+	double var, mean_channel_capacity, mean_BER, I_xy = 0;
 	
 	vector<double> channel_capacity, BER;
-	vector<double> I_xy;
 
 	cout << "Tx: ";
 
@@ -2085,17 +2100,12 @@ void simulation(int destination, double frequency, string topology, double time_
 
 			if (pyx_joint[y][x] == 0) pyx_joint[y][x] = 0.00000000001;			
 
-			I_xy.push_back( px[x] * pyx_joint[y][x] * log2( pyx_joint[y][x]/py[y] ) ); // Mutual Information
+			I_xy += px[x] * pyx_joint[y][x] * log2( pyx_joint[y][x]/py[y] ); // Mutual Information
 		}
 	}
 
-	// first = I_xy.begin();
-	// for (; first != I_xy.end(); first++){
-	// 	cout << "I_xy: " << *first << endl;
-	// }
-
 	mean_BER 			  = BER_counter / time_size;
-	mean_channel_capacity = *max_element(I_xy.begin(), I_xy.end());
+	mean_channel_capacity = I_xy;
 
 	/* ### CALCULATING CHANNEL CAPACITY AND BER - END ### */
 
@@ -2104,7 +2114,11 @@ void simulation(int destination, double frequency, string topology, double time_
 	cout << "Saving results..." << endl;
 
 	file_results << frequency << "," << destination << "," << time_slot << "," << calc_gain <<  "," << calc_SNR << "," << mean_channel_capacity << "," << mean_BER << ",\n";
-
+	while (1)
+	{
+		/* code */
+	}
+	
 };
 
 /* MAIN */

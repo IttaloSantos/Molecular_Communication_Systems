@@ -4,9 +4,10 @@ import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 
 ### Setting Simulation Variables ###
-timeSlotStep       = 0.01
-timeSlotBegin      = 0.01
-timeSlotEnd        = 0.11
+timeSlotStep       = 0.001
+timeSlotBegin      = 0.001
+timeSlotEnd        = 0.011
+evalMetricMaxValue = 0
 
 freq               = np.around(np.arange(0.1, 1.1, 0.1), 1                           )
 timeSlot           = np.around(np.arange(timeSlotBegin, timeSlotEnd, timeSlotStep), 2)
@@ -18,16 +19,22 @@ evalMetricName     = 'Channel Capacity (bits)'
 # evalMetricName     = 'SNR (dB)'
 # evalMetricName     = 'BER'
 
-# referenceVariable  = 'Time Slot (s)'
-referenceVariable  = 'Range'                                              # Variable that will be showed in the text
+# evalMetricNamePt   = evalMetricName
+evalMetricNamePt   = 'Capacidade do Canal (bits)'
+# evalMetricNamePt   = 'Ganho (dB)'
 
-referenceNumber    = 6                                                    # The value for the referenceVariable that will be considered on the results
+referenceVariable  = 'Time Slot (s)'                                    # When reference number is Tb, change the axisVariable (for)
+# referenceVariable  = 'Range'                                              # Variable that will be showed in the text
 
-# xAxisVariable      = rxRange                                              # The opposite of referenceVariable
-xAxisVariable      = freq
+referenceNumber    = 0.008                                                    # The value for the referenceVariable that will be considered on the results
 
-# xAxisName          = 'r (#celulas)'                                       # The same as xAxisVariable
-xAxisName          = 'f (Hz)'
+xAxisVariable      = rxRange                                              # Variable which is out of getgroup
+# xAxisVariable      = freq
+# xAxisVariable      = timeSlot
+
+xAxisName          = 'r (#celulas)'                                       # The same as xAxisVariable
+# xAxisName          = 'f (Hz)'
+# xAxisName          = 'Tb (s)'
 
                     #   Red        Orange     Yellow     Green      Brown      Blue      Blue Sky    Pink     Green Olive   Black               
 lineColor          = ['#FF0000', '#FFA500', '#FFFF00', '#008000', '#8B4513', '#0000FF', '#00BFFF', '#FF1493', '#808000', '#000000']  # 10 colors for Time Slot and Frequency
@@ -48,30 +55,35 @@ resultsMean        = results.groupby(['Freq (Hz)', 'Range', 'Time Slot (s)']).me
 fig = go.Figure()
 figs, ax = plt.subplots()
 
-# for f, c in zip(freq, lineColor):
+for f, c in zip(freq, lineColor): # Variable of the legend
     
-#     evalMetric = resultsMean.groupby(['Freq (Hz)', referenceVariable]).get_group( (f, referenceNumber) )
+    evalMetric = resultsMean.groupby(['Freq (Hz)', referenceVariable]).get_group( (f, referenceNumber) )
 
-for ts, c in zip(timeSlot, lineColor):
-    
-    evalMetric = resultsMean.groupby(['Time Slot (s)', referenceVariable]).get_group( (ts, referenceNumber) )
+    # for ts, c in zip(timeSlot, lineColor):
+        
+    #     evalMetric = resultsMean.groupby(['Time Slot (s)', referenceVariable]).get_group( (ts, referenceNumber) )
 
-    # fig.add_trace(go.Scatter(
-    #     x=x+x_rev,
-    #     y=y1_upper+y1_lower,
-    #     fill='toself',
-    #     fillcolor='rgba(0,0,255,0.2)',
-    #     line_color='rgba(255,255,255,0)',
-    #     showlegend=False,
-    #     name='tx: [Ca2+]i',
-    # ))
+    if referenceVariable != 'Range':
+        fig.add_trace(go.Scatter(
+            x          = xAxisVariable, 
+            y          = np.asarray( evalMetric[ evalMetricName ] ),
+            line_color = c,
+            name       = str(f) + " Hz",
+        ))
 
-    fig.add_trace(go.Scatter(
-        x          = xAxisVariable, 
-        y          = np.asarray( evalMetric[ evalMetricName ] ),
-        line_color = c,
-        name       = str(ts) + " s",                                                              # If frequency is the main variable
-    ))
+        text = '<b>Tb = ' + str(referenceNumber) + ' s<b>'
+
+    else:
+        fig.add_trace(go.Scatter(
+            x          = xAxisVariable, 
+            y          = np.asarray( evalMetric[ evalMetricName ] ),
+            line_color = c,
+            name       = str(ts) + " s",
+        ))
+
+        text = '<b>r = ' + str(referenceNumber) + ' célula(s)<b>'
+
+    evalMetricMaxValue = max(evalMetricMaxValue, max( np.asarray( evalMetric[ evalMetricName ] ) ) )
 
     # ax.semilogy(np.asarray( evalMetric['SNR (dB)'] ), np.asarray( evalMetric[evalMetricName] ) ) # , label=legendas[i], linestyle=estilos_linha[i]
 
@@ -81,21 +93,20 @@ for ts, c in zip(timeSlot, lineColor):
 # fig.savefig("/home/ittalo/Documentos/Projeto Comunicação Molecular/Imagens/SISO/SNRxBER.png")
 # plt.show()
 
+xAxisVariableMaxValue = max(xAxisVariable)
+
 fig.update_traces(mode='lines+markers', marker_size=5)
 
 fig.update_layout(xaxis_title  = '<b>' + xAxisName + '<b>',
-                yaxis_title    = '<b>' + evalMetricName + '<b>',
+                yaxis_title    = '<b>' + evalMetricNamePt + '<b>',
                 yaxis_zeroline = False,
                 xaxis_zeroline = False,
                 font           = dict(size = 16),
                 paper_bgcolor  = 'rgba(0,0,0,0)',plot_bgcolor = 'rgba(0,0,0,0)')
 
-xAxisVariableMaxValue = max( xAxisVariable )
-evalMetricMaxValue    = max( np.asarray( evalMetric[ evalMetricName ] ) )
-
-fig.add_annotation(x  = xAxisVariableMaxValue - xAxisVariableMaxValue / 1.5,                       
-            y         = evalMetricMaxValue -  evalMetricMaxValue / 8,
-            text      = '<b>r = ' + str(referenceNumber) + ' célula(s)<b>',                              # Depending on the reference variable
+fig.add_annotation(x  = xAxisVariableMaxValue / 2,                       
+            y         = 1.001 * evalMetricMaxValue,
+            text      = text,                              
             showarrow = False)
 
 fig.update_yaxes(showline=True, linewidth=2, linecolor='black', showgrid=True, gridwidth=1, gridcolor='lightgray')
