@@ -18,7 +18,7 @@ using namespace std;
 #define e_0 1.6e-19 // [C] Elementary charge
 #define c_pulse 0.5
 #define low_threshold 0.0
-#define high_threshold 0.05
+#define high_threshold 0.03
 
 double conc, tx_conc, diameter_cell = 5, deltaamp;
 
@@ -435,22 +435,22 @@ public:
 		double Rx_p = get(Rx_id, "tx_rx_reactions") / total_reactions;
 		double CIR[time_size]; // Channel Impulse Response
 		
-		int    alpha = static_cast<int>( max_value(rxtx_concentration["rx"].begin(), rxtx_concentration["rx"].size()) / ALPHA );
+		int    alpha = static_cast<int>( *max_element(rxtx_concentration["tx"].begin(), rxtx_concentration["tx"].end()) / ALPHA );
 
-		cout << "aplha = " << alpha << endl;
+		// cout << "aplha = " << alpha << endl;
 
 		// double alpha = static_cast<int>( ( max_element(rxtx_concentration["rx"].begin, rxtx_concentration["rx"].end) + max_element(rxtx_concentration["tx"].begin, rxtx_concentration["tx"].end) ) / (2 * ALPHA);
 
 		default_random_engine generator;
 
-		gamma_distribution<> distribution(alpha, Rx_p ); // + Tx_p
+		gamma_distribution<> distribution(alpha, Tx_p);
 
 		// cout << setprecision(5) << rx_reactions / total_reactions * Tx_p[j] << ",";
 
 		for (int k = 0; k < time_size; k++)
 		{	
 			CIR[k] = distribution(generator);
-			cout << CIR[k];
+			// cout << CIR[k] << " ";
 			
 			Rx_states[k] = modulation(CIR[k]*rxtx_concentration["tx"][k]);// + CIR[i][1][k]);
 		}
@@ -481,17 +481,6 @@ public:
 		}
 
 		return sum;
-	}
-
-	double max_value(vector<double>::iterator first, int size)
-	{
-		double max = 0;
-
-		for (int i = 0; i < size; i++)
-			if ( *(first + i) > max )	
-				max = *(first + i);
-
-		return max;
 	}
 
 };
@@ -2046,7 +2035,7 @@ void simulation(int destination, double frequency, string topology, double time_
 	int bit_number = 2, time_slots_number = destination, contc=0, contb=0;
 	int rx_x = tx_x + destination;
 	
-	double px[bit_number] = {}, py[bit_number] = {}, pyx_joint[bit_number][bit_number] = {}, BER_counter = 0;
+	double px[bit_number] = {}, py[bit_number] = {}, pyx_joint[bit_number][bit_number] = {0}, BER_counter = 0;
 	double var, mean_channel_capacity, mean_BER, I_xy = 0;
 	
 	vector<double> channel_capacity, BER;
@@ -2065,8 +2054,21 @@ void simulation(int destination, double frequency, string topology, double time_
 	px[0] = 1 - px[1];
 	
 	py[1] = tecido.conditional_accumulate(Rx_states, time_size, 1) / time_size;
-	if (py[1] == 0) py[1] = 0.00000000001;
 	py[0] = 1 - py[1];
+
+	for (int y = 0; y < bit_number; y++)
+	{
+		if (px[y] == 0)
+		{
+			px[y] 	  = 0.00000000001;
+			px[1 - y] = 1 - px[y];
+		}	
+		if (py[y] == 0)
+		{
+			py[y] 	  = 0.00000000001;
+			py[1 - y] = 1 - py[y];
+		}
+	}
 
 	for (int i = 0; i < time_size; i++) // - time_slots_number
 	{
@@ -2078,27 +2080,29 @@ void simulation(int destination, double frequency, string topology, double time_
 		}
 	}
 
-	pyx_joint[0][0] = time_size - pyx_joint[1][0];
-	pyx_joint[0][1] = time_size - pyx_joint[1][1];
-
 	for (int y = 0; y < bit_number; y++) // Number of y1 given x0; Number of y1 given x1; Number of y0 given x0; Number of y0 given x1
-	{
-			if (px[y] == 0)
-			{
-				px[y] 	  = 0.00000000001;
-				px[1 - y] = 1 - px[y];
-			}
-			if (py[y] == 0)
-			{
-				py[y] 	  = 0.00000000001;
-				py[1 - y] = 1 - py[y];
-			}
-
+	{	
 		for (int x = 0; x < bit_number; x++)
 		{
 			pyx_joint[y][x] = pyx_joint[y][x] / time_size;
 
-			if (pyx_joint[y][x] == 0) pyx_joint[y][x] = 0.00000000001;			
+			// cout << setprecision(5) << "pyx_joint[" << y << "]" << "[" << x << "] = " << pyx_joint[y][x] << endl;			
+		}
+	}
+
+	if (pyx_joint[1][0] == 0) pyx_joint[1][0] = 0.00000000001;
+	if (pyx_joint[1][1] == 0) pyx_joint[1][1] = 0.00000000001;
+
+	pyx_joint[0][0] = 1 - pyx_joint[1][0];
+	pyx_joint[0][1] = 1 - pyx_joint[1][1];	
+
+	for (int y = 0; y < bit_number; y++) // Number of y1 given x0; Number of y1 given x1; Number of y0 given x0; Number of y0 given x1
+	{	
+		// cout << "px[x] = " << px[y] << "py[y] = " << py[y] << endl;
+
+		for (int x = 0; x < bit_number; x++)
+		{
+			// cout << setprecision(5) << "pyx_joint[" << y << "]" << "[" << x << "] = " << pyx_joint[y][x] << endl;			
 
 			I_xy += px[x] * pyx_joint[y][x] * log2( pyx_joint[y][x]/py[y] ); // Mutual Information
 		}
@@ -2114,18 +2118,16 @@ void simulation(int destination, double frequency, string topology, double time_
 	cout << "Saving results..." << endl;
 
 	file_results << frequency << "," << destination << "," << time_slot << "," << calc_gain <<  "," << calc_SNR << "," << mean_channel_capacity << "," << mean_BER << ",\n";
-	while (1)
-	{
-		/* code */
-	}
 	
+	// cout << setprecision(5) << "cc = " << mean_channel_capacity << "; BER = " << mean_BER << endl;
+
 };
 
 /* MAIN */
 int main()
 {
 	int simulation_number = 10;
-	vector<double> time_slot{0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.01}; //s
+	vector<double> time_slot{0.002,0.004,0.006,0.008,0.01,0.012,0.014,0.016,0.018,0.02}; //s
 	vector<double> frequencies{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1}; //[Hz]
 	string topology = "RD";
 	// int destination = 1;
