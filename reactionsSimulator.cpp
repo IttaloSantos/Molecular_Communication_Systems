@@ -2050,61 +2050,48 @@ void simulation(int destination, double frequency, string topology, double time_
 	
 	// cout << "Time_slot_number: " << time_slots_number << endl;
 	
-	px[1] = tecido.conditional_accumulate(Tx_states.begin(), time_size, 1) / time_size;
-	px[0] = 1 - px[1];
+	/* Distribuição de probabilidade do Tx*/
+	px[1] = accumulate(Tx_states.begin(), Tx_states.end(), 0.0) / time_size;
 	
-	py[1] = tecido.conditional_accumulate(Rx_states, time_size, 1) / time_size;
+	if (px[1] == 1)
+		px[1] = 0.999999999;
+	
+	px[0] = 1 - px[1];
+
+	py[1] = accumulate(Rx_states, Rx_states + time_size, 0.0) / time_size;
+	
+	if (py[1] == 1)
+		py[1] = 0.999999999;
+	
 	py[0] = 1 - py[1];
 
-	for (int y = 0; y < bit_number; y++)
+	for (int i = 0; i < time_size; i++)
 	{
-		if (px[y] == 0)
+		if (Rx_states[i] == 1 && Tx_states[i] == 0)
 		{
-			px[y] 	  = 0.00000000001;
-			px[1 - y] = 1 - px[y];
-		}	
-		if (py[y] == 0)
-		{
-			py[y] 	  = 0.00000000001;
-			py[1 - y] = 1 - py[y];
+			pyx_joint[ Rx_states[i] ][ Tx_states[i] ]++;
 		}
-	}
 
-	for (int i = 0; i < time_size; i++) // - time_slots_number
-	{
-		pyx_joint[ Rx_states[i] ][ Tx_states[i] ]++; // + time_slots_number
-
-		if ( Rx_states[i] != Tx_states[i] ) // + time_slots_number
+		if ( Rx_states[i] != Tx_states[i] )
 		{
 			BER_counter++;
 		}
 	}
 
-	for (int y = 0; y < bit_number; y++) // Number of y1 given x0; Number of y1 given x1; Number of y0 given x0; Number of y0 given x1
-	{	
-		for (int x = 0; x < bit_number; x++)
-		{
-			pyx_joint[y][x] = pyx_joint[y][x] / time_size;
+	pyx_joint[1][0] = pyx_joint[1][0] / time_size;
 
-			// cout << setprecision(5) << "pyx_joint[" << y << "]" << "[" << x << "] = " << pyx_joint[y][x] << endl;			
-		}
-	}
-
-	if (pyx_joint[1][0] == 0) pyx_joint[1][0] = 0.00000000001;
-	if (pyx_joint[1][1] == 0) pyx_joint[1][1] = 0.00000000001;
-
+	if (pyx_joint[1][0] == 0)
+		pyx_joint[1][0] = 0.0000000001;
+	
 	pyx_joint[0][0] = 1 - pyx_joint[1][0];
-	pyx_joint[0][1] = 1 - pyx_joint[1][1];	
+	pyx_joint[1][1] = py[1] + pyx_joint[1][0] - (py[1] * pyx_joint[1][0]);
+	pyx_joint[0][1] = 1 - pyx_joint[1][1];
 
 	for (int y = 0; y < bit_number; y++) // Number of y1 given x0; Number of y1 given x1; Number of y0 given x0; Number of y0 given x1
 	{	
-		// cout << "px[x] = " << px[y] << "py[y] = " << py[y] << endl;
-
 		for (int x = 0; x < bit_number; x++)
 		{
-			// cout << setprecision(5) << "pyx_joint[" << y << "]" << "[" << x << "] = " << pyx_joint[y][x] << endl;			
-
-			I_xy += px[x] * pyx_joint[y][x] * log2( pyx_joint[y][x]/py[y] ); // Mutual Information
+			I_xy = I_xy + px[x] * pyx_joint[y][x] * log2( pyx_joint[y][x] / py[y] ); // Mutual Information
 		}
 	}
 
