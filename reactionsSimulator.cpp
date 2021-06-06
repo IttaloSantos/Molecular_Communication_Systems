@@ -1844,6 +1844,8 @@ void simulation(int destination, double frequency, string topology, double time_
 	
 	if (py[1] == 1)
 		py[1] = 0.999999999;
+	else if (py[1] == 0)
+		py[1] = 0.0000000001;
 	
 	py[0] = 1 - py[1];
 
@@ -1864,9 +1866,17 @@ void simulation(int destination, double frequency, string topology, double time_
 
 	if (pyx_joint[1][0] == 0)
 		pyx_joint[1][0] = 0.0000000001;
+	else if (pyx_joint[1][0] == 1)
+		pyx_joint[1][0] = 0.999999999;
 	
 	pyx_joint[0][0] = 1 - pyx_joint[1][0];
 	pyx_joint[1][1] = py[1] + pyx_joint[1][0] - (py[1] * pyx_joint[1][0]);
+
+	if (pyx_joint[1][1] == 0)
+		pyx_joint[1][1] = 0.0000000001;
+	else if (pyx_joint[1][1] == 1)
+		pyx_joint[1][1] = 0.999999999;
+
 	pyx_joint[0][1] = 1 - pyx_joint[1][1];
 
 	for (int y = 0; y < bit_number; y++) // Number of y1 given x0; Number of y1 given x1; Number of y0 given x0; Number of y0 given x1
