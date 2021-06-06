@@ -1268,7 +1268,7 @@ public:
 		}
 	}
 
-	vector<double> NCX_reaction(vector<int> &NCX_mode_vector) {
+	vector<double> NCX_reaction(int* NCX_mode_vector) {
 		int NCX_mode, num_reactions = 20; // number of reactions
 		int NCX_mode_array[DIM_Y][DIM_X][DIM_Z][num_reactions];
 		double max_reaction = 0, reaction_choice, alfa_0 = 0, reaction_value;
@@ -1344,7 +1344,7 @@ public:
 						if (sum_down < alfa_0 * r2) {
 							//cout << sum_upper << " " << alfa_0 * r2 << " " << sum_down << endl;
 							for (int n=0; n<num_reactions; n++){
-								NCX_mode_vector.push_back(NCX_mode_array[j][i][k][n]);
+								NCX_mode_vector[n] = NCX_mode_array[j][i][k][n];
 							}
 							retorno[0] = 0;
 							retorno[1] = i;
@@ -1579,26 +1579,19 @@ void simulation(int destination, double frequency, string topology, double time_
 	// tecido.writeFileHeader(exportfile);
 	// tecido.printTissuef(exportfile, 0); // Writes the tissue's initial state to the file
 	
-	// Opening file for sotring concentration data at time simulation
-	ofstream cdatafile;
-	if (destination == 1 && frequency == 0.6 && time_slot == 0.06) 
-	{
-		cdatafile.open("temp/" + fileName + ".csv");
-		cdatafile << "time,time_calcium,c_in,c_out,Vm,\n"; //,co_tx,co_rx
-	}
-
 	// Inicializando o Algoritmo de Gillespie
 	Gillespie gillespie(&tecido);
 
 	int nConnections = tecido.numberConnections(), num_reactions = 20;
 	int reaction, int_time = 0, x_c, y_c, z_c;
 	int total_reactions = 0, greaterThanTimeScounter = 0;
+	int NCX_mode_vector[num_reactions] = {0};
 
 	cout << "Connections per cell: " << nConnections << endl;
 	
 	vector<double> choice(5);
 	vector<double> C_tx, C_rx;
-	vector<int> connections(nConnections), qtd_reactions(9 + QTD_DIFFUSIONS * (nConnections * 3)), NCX_mode_vector, Tx_states;
+	vector<int> connections(nConnections), qtd_reactions(9 + QTD_DIFFUSIONS * (nConnections * 3)), Tx_states;
 	vector<int>::iterator first;
 
 	double simulation_time = 200, current_time = 0, current_time_calcium = 0, current_time_sodium_inter = 0, current_time_sodium_extra = 0, current_time_calcium_extra = 0, current_time_NCX = 0, current_time_NCX_AUX = 0, current_time_calcium_aux = 0;
@@ -1960,30 +1953,6 @@ void simulation(int destination, double frequency, string topology, double time_
 				}
 			}
 			
-			// Storing concentration data at simulation time
-			// cdatafile << int_time << "," << tecido.get(tx_x, tx_y, tx_z, "C") << "," << tecido.get(tx_x+destination, tx_y, tx_z, "C") << "," << tecido.get(tx_x, tx_y, tx_z, "C_o") << "," << tecido.get(tx_x+destination, tx_y, tx_z, "C_o") << ",\n";
-			if (destination == 1 && frequency == 0.6 && time_slot == 0.06) 
-			{
-				if (x_c==tx_x && y_c==tx_y && z_c==tx_z)
-				{
-					c_in = c_in;
-				}
-				else
-				{
-					c_in = tecido.get(x_c, y_c, z_c, "C");
-				}
-				// if (choice[1]==tx_x && choice[2]==tx_y && choice[3]==tx_z)
-				// {
-					c_out = tecido.get(choice[1], choice[2], choice[3], "C_o");
-				// }
-				// else
-				// {
-				// 	c_out = c_out;
-				// 	// tecido.get(choice[1], choice[2], choice[3], "K_i");//-10;	
-				// }
-				cdatafile << int_time << "," << current_time_calcium_aux << "," << c_in << "," << c_out << "," << tecido.get(choice[1], choice[2], choice[3], "Vm") << ",\n";
-			}
-
 			/* STORAGE OF CALCIUM CONCENTRATION */
 			C_tx.push_back(tecido.get(tx_x, tx_y, tx_z, "C"));
 			C_rx.push_back(tecido.get(tx_x + destination, tx_y, tx_z, "C"));
@@ -1993,11 +1962,6 @@ void simulation(int destination, double frequency, string topology, double time_
 
 		// /* DIFFUSION ERROR => NO INCREMENT TIME */
 		// if (tau_calcium == 0) current_time -= (tau_max * 1000); //(tau_NCX == 0 &&  && tau_CP == 0)  && tau_sodium_inter == 0 && tau_NKATP == 0 
-	}
-
-	if (destination == 1 && frequency == 0.6 && time_slot == 0.06)
-	{
-		cdatafile.close();
 	}
 
 	/* ### CALCULATING GAIN AND SNR ### */
@@ -2062,6 +2026,8 @@ void simulation(int destination, double frequency, string topology, double time_
 	
 	if (py[1] == 1)
 		py[1] = 0.999999999;
+	else if (py[1] == 0)
+		py[1] = 0.0000000001;
 	
 	py[0] = 1 - py[1];
 
@@ -2082,9 +2048,17 @@ void simulation(int destination, double frequency, string topology, double time_
 
 	if (pyx_joint[1][0] == 0)
 		pyx_joint[1][0] = 0.0000000001;
+	else if (pyx_joint[1][0] == 1)
+		pyx_joint[1][0] = 0.999999999;
 	
 	pyx_joint[0][0] = 1 - pyx_joint[1][0];
 	pyx_joint[1][1] = py[1] + pyx_joint[1][0] - (py[1] * pyx_joint[1][0]);
+
+	if (pyx_joint[1][1] == 0)
+		pyx_joint[1][1] = 0.0000000001;
+	else if (pyx_joint[1][1] == 1)
+		pyx_joint[1][1] = 0.999999999;
+
 	pyx_joint[0][1] = 1 - pyx_joint[1][1];
 
 	for (int y = 0; y < bit_number; y++) // Number of y1 given x0; Number of y1 given x1; Number of y0 given x0; Number of y0 given x1
