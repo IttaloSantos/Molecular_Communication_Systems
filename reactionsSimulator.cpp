@@ -2088,7 +2088,7 @@ void simulation(int destination, double frequency, string topology, double time_
 int main()
 {
 	int simulation_number = 10;
-	vector<double> time_slot{0.002,0.004,0.006,0.008,0.01,0.012,0.014,0.016,0.018,0.02}; //s
+	vector<double> time_slot{0.0005,0.0006,0.0007,0.0008,0.0009,0.001,0.002,0.003,0.004,0.005}; //s
 	vector<double> frequencies{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1}; //[Hz]
 	string topology = "RD";
 	// int destination = 1;

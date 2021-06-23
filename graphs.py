@@ -4,31 +4,26 @@ import plotly.graph_objs as go
 import matplotlib.pyplot as plt
 
 ### Setting Simulation Variables ###
-timeSlotStep       = 0.001
-timeSlotBegin      = 0.001
-timeSlotEnd        = 0.011
-evalMetricMaxValue = 0
+timeSlotStep       = 1e-4
+timeSlotBegin      = 5e-4
+timeSlotEnd        = 1.1e-3
 
 freq               = np.around(np.arange(0.1, 1.1, 0.1), 1                           )
-timeSlot           = np.around(np.arange(timeSlotBegin, timeSlotEnd, timeSlotStep), 2)
+timeSlot           = [5e-4,6e-4,7e-4,8e-4,9e-4,1e-3,2e-3,3e-3,4e-3,5e-3] #np.around(np.arange(timeSlotBegin, timeSlotEnd, timeSlotStep), 4)
 rxRange            = np.arange(1,7                                                   )
 
 ### Setting the analysis ###
-evalMetricName     = 'Channel Capacity (bits)'
-# evalMetricName     = 'Gain (dB)'
+# evalMetricName     = 'Channel Capacity (bits)'
+evalMetricName     = 'Gain (dB)'
 # evalMetricName     = 'SNR (dB)'
 # evalMetricName     = 'BER'
 
-# evalMetricNamePt   = evalMetricName
-evalMetricNamePt   = 'Capacidade do Canal (bits)'
-# evalMetricNamePt   = 'Ganho (dB)'
-
-referenceVariable  = 'Time Slot (s)'                                    # When reference number is Tb, change the axisVariable (for)
+referenceVariable  = 'Time Slot (s)'
 # referenceVariable  = 'Range'                                              # Variable that will be showed in the text
 
-referenceNumber    = 0.008                                                    # The value for the referenceVariable that will be considered on the results
+referenceNumber    = 2e-3                                                    # The value for the referenceVariable that will be considered on the results
 
-xAxisVariable      = rxRange                                              # Variable which is out of getgroup
+xAxisVariable      = rxRange                                              # The opposite of referenceVariable
 # xAxisVariable      = freq
 # xAxisVariable      = timeSlot
 
@@ -55,7 +50,7 @@ resultsMean        = results.groupby(['Freq (Hz)', 'Range', 'Time Slot (s)']).me
 fig = go.Figure()
 figs, ax = plt.subplots()
 
-for f, c in zip(freq, lineColor): # Variable of the legend
+for f, c in zip(freq, lineColor):
     
     evalMetric = resultsMean.groupby(['Freq (Hz)', referenceVariable]).get_group( (f, referenceNumber) )
 
@@ -63,50 +58,48 @@ for f, c in zip(freq, lineColor): # Variable of the legend
         
     #     evalMetric = resultsMean.groupby(['Time Slot (s)', referenceVariable]).get_group( (ts, referenceNumber) )
 
-    if referenceVariable != 'Range':
-        fig.add_trace(go.Scatter(
-            x          = xAxisVariable, 
-            y          = np.asarray( evalMetric[ evalMetricName ] ),
-            line_color = c,
-            name       = str(f) + " Hz",
-        ))
+    # fig.add_trace(go.Scatter(
+    #     x=x+x_rev,
+    #     y=y1_upper+y1_lower,
+    #     fill='toself',
+    #     fillcolor='rgba(0,0,255,0.2)',
+    #     line_color='rgba(255,255,255,0)',
+    #     showlegend=False,
+    #     name='tx: [Ca2+]i',
+    # ))
 
-        text = '<b>Tb = ' + str(referenceNumber) + ' s<b>'
-
-    else:
-        fig.add_trace(go.Scatter(
-            x          = xAxisVariable, 
-            y          = np.asarray( evalMetric[ evalMetricName ] ),
-            line_color = c,
-            name       = str(ts) + " s",
-        ))
-
-        text = '<b>r = ' + str(referenceNumber) + ' célula(s)<b>'
-
-    evalMetricMaxValue = max(evalMetricMaxValue, max( np.asarray( evalMetric[ evalMetricName ] ) ) )
+    fig.add_trace(go.Scatter(
+        x          = xAxisVariable, 
+        y          = np.asarray( evalMetric[ evalMetricName ] ),
+        line_color = c,
+        name       = str(f) + " Hz",                                                              # If frequency is the main variable
+    ))
 
     # ax.semilogy(np.asarray( evalMetric['SNR (dB)'] ), np.asarray( evalMetric[evalMetricName] ) ) # , label=legendas[i], linestyle=estilos_linha[i]
+#     ax.semilogx(timeSlot, np.asarray( evalMetric[evalMetricName] ) )
 
-# ax.set(xlabel='SNR (dB)', ylabel='BER')
+# # ax.set(xlabel='SNR (dB)', ylabel='BER')
+# ax.set(xlabel='Tb (s)', ylabel='BER')
 # ax.grid()
 # ax.legend(loc=1)
-# fig.savefig("/home/ittalo/Documentos/Projeto Comunicação Molecular/Imagens/SISO/SNRxBER.png")
+# plt.savefig("ber_c1_TbxF.png")
 # plt.show()
-
-xAxisVariableMaxValue = max(xAxisVariable)
 
 fig.update_traces(mode='lines+markers', marker_size=5)
 
 fig.update_layout(xaxis_title  = '<b>' + xAxisName + '<b>',
-                yaxis_title    = '<b>' + evalMetricNamePt + '<b>',
+                yaxis_title    = '<b>' + evalMetricName + '<b>',
                 yaxis_zeroline = False,
                 xaxis_zeroline = False,
                 font           = dict(size = 16),
                 paper_bgcolor  = 'rgba(0,0,0,0)',plot_bgcolor = 'rgba(0,0,0,0)')
 
-fig.add_annotation(x  = xAxisVariableMaxValue / 2,                       
-            y         = 1.001 * evalMetricMaxValue,
-            text      = text,                              
+xAxisVariableMaxValue = max( xAxisVariable )
+evalMetricMaxValue    = max( np.asarray( evalMetric[ evalMetricName ] ) )
+
+fig.add_annotation(x  = xAxisVariableMaxValue - 0.5*xAxisVariableMaxValue,# / 1.5,                       
+            y         = evalMetricMaxValue,# -  evalMetricMaxValue / 8,
+            text      = '<b>Tb = ' + str(referenceNumber) + ' s<b>',                              # Depending on the reference variable
             showarrow = False)
 
 fig.update_yaxes(showline=True, linewidth=2, linecolor='black', showgrid=True, gridwidth=1, gridcolor='lightgray')
