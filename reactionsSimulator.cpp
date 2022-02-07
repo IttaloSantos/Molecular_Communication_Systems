@@ -318,15 +318,15 @@ public:
 		}
 
 		// IMPRIMINDO AS CONEXÕES DE CADA CÉLULA
-		list<int>::iterator it;
+		// list<int>::iterator it;
 
-		for (int v = 0; v < NC; v++) {
-			cout << "Célula " << v << ": ";
-			for (it = connect[v].begin(); it != connect[v].end(); it++){
-				cout << *it << " ";
-			}
-			cout << endl;
-		}
+		// for (int v = 0; v < NC; v++) {
+		// 	cout << "Célula " << v << ": ";
+		// 	for (it = connect[v].begin(); it != connect[v].end(); it++){
+		// 		cout << *it << " ";
+		// 	}
+		// 	cout << endl;
+		// }
 	}
 
 	void linkRadius(int radius) {
@@ -454,7 +454,7 @@ public:
 			
 			Rx_states[k] = modulation(CIR[k]*rxtx_concentration["tx"][k]);// + CIR[i][1][k]);
 		}
-		cout << endl;
+		// cout << endl;
 	}
 
 	double conditional_accumulate(int* first, int size, int value)
@@ -492,12 +492,12 @@ public:
 	Gillespie(Network *rede) {
 		tecido = rede;
 
-		for (int i = 0; i < DIM_X; i++) {
-			for (int j = 0; j < DIM_Y; j++) {
-				cout << "(" << j << "," << i << ") " << tecido->getId(i, j, trunc(DIM_Z / 2)) << " " << tecido->get(i, j, trunc(DIM_Z / 2), "C") << " ";
-			}
-			cout << endl;
-		}
+		// for (int i = 0; i < DIM_X; i++) {
+		// 	for (int j = 0; j < DIM_Y; j++) {
+		// 		cout << "(" << j << "," << i << ") " << tecido->getId(i, j, trunc(DIM_Z / 2)) << " " << tecido->get(i, j, trunc(DIM_Z / 2), "C") << " ";
+		// 	}
+		// 	cout << endl;
+		// }
 
 		//cout << sigma0(0) << endl;
 	}
@@ -1571,7 +1571,7 @@ void simulation(int destination, double frequency, string topology, double time_
 	// tecido.set(tx_x, tx_y, tx_z, "Na_o", 1000*SCALE); // Quais as referências?
 
 	// Print tissue
-	tecido.printTissue();
+	// tecido.printTissue();
 
 	// Opening file containing the data of calcium concentration that will be plotted
 	// ofstream exportfile;
@@ -1587,7 +1587,7 @@ void simulation(int destination, double frequency, string topology, double time_
 	int total_reactions = 0, greaterThanTimeScounter = 0;
 	int NCX_mode_vector[num_reactions] = {0};
 
-	cout << "Connections per cell: " << nConnections << endl;
+	// cout << "Connections per cell: " << nConnections << endl;
 	
 	vector<double> choice(5);
 	vector<double> C_tx, C_rx;
@@ -1619,13 +1619,11 @@ void simulation(int destination, double frequency, string topology, double time_
 			if (trunc(current_time) != int_time) {
 				int_time = trunc(current_time);
 
-				cout << "Time: " << int_time << endl;
-
-				cout << "File Name: " << fileName << endl;
+				// cout << "Time: " << int_time << endl;
 
 				// Print Tissue
-				tecido.printTissue();
-				cout << endl;	
+				// tecido.printTissue();
+				// cout << endl;	
 				// End Print Tissue
 
 				// Write Calcium concentration of tissue on file
@@ -1797,34 +1795,34 @@ void simulation(int destination, double frequency, string topology, double time_
 			}
 		
 			/* INTERCELLULAR SODIUM REACTIONS */
-			// if (current_time_sodium_inter<tau_max) 
-			// {
-			//  	choice = gillespie.sodiumInter();
-			//  	tau_sodium_inter = choice[4];
-			//  	reaction = choice[0];
-			// 	// cout << "Sodium reactions" << endl;
-			//  	//cout << setprecision(5) << "Tau_sodium_inter = " << tau_sodium_inter << endl;
-			//  	for (int conn = 0; conn < nConnections; conn++) 
-			// 	{
-			//  		if (reaction >= 1 + (conn * 3) && reaction <= 3 + (conn * 3)) 
-			// 		 {
-			//  			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
+			if (current_time_sodium_inter<tau_max) 
+			{
+			 	choice = gillespie.sodiumInter();
+			 	tau_sodium_inter = choice[4];
+			 	reaction = choice[0];
+				// cout << "Sodium reactions" << endl;
+			 	//cout << setprecision(5) << "Tau_sodium_inter = " << tau_sodium_inter << endl;
+			 	for (int conn = 0; conn < nConnections; conn++) 
+				{
+			 		if (reaction >= 1 + (conn * 3) && reaction <= 3 + (conn * 3)) 
+					 {
+			 			connections = tecido.getConnections(tecido.getId(choice[1], choice[2], choice[3]));
 
-			//  			if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[conn], "Na_i")) {
-			//  				tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
-			//  				tecido.accumulate(connections[conn], "Na_i", ALPHA);
-			//  			} 
-			// 			else 
-			// 			{
-			//  				//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[conn] << endl;
-			//  				diffusion_error = true;
-			//  			}
-			//  		}
-			//  	}
-			//  	current_time_sodium_inter += tau_sodium_inter;
-			//  	/* DIFFUSION ERROR => NO INCREMENT TIME */
-			//  	if (diffusion_error) current_time_sodium_inter -= (tau_sodium_inter);
-			// }
+			 			if (connections[conn] != -1 && tecido.get(choice[1], choice[2], choice[3], "Na_i") > tecido.get(connections[conn], "Na_i")) {
+			 				tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -ALPHA);
+			 				tecido.accumulate(connections[conn], "Na_i", ALPHA);
+			 			} 
+						else 
+						{
+			 				//cout << tecido.getId(choice[1], choice[2], choice[3]) << " " << connections[conn] << endl;
+			 				diffusion_error = true;
+			 			}
+			 		}
+			 	}
+			 	current_time_sodium_inter += tau_sodium_inter;
+			 	/* DIFFUSION ERROR => NO INCREMENT TIME */
+			 	if (diffusion_error) current_time_sodium_inter -= (tau_sodium_inter);
+			}
 
 			/* NCX - Reaction */
 			if (current_time_NCX < tau_max) 
@@ -1859,49 +1857,49 @@ void simulation(int destination, double frequency, string topology, double time_
 			}
 
 			/* NKATP Reaction */
-			if (current_time_NKATP < tau_max) 
-			{
-				choice = gillespie.NKATP_reaction();
-				tau_NKATP = choice[4];
+			// if (current_time_NKATP < tau_max) 
+			// {
+			// 	choice = gillespie.NKATP_reaction();
+			// 	tau_NKATP = choice[4];
 
-				// cout << "NKP functioning..." << endl;
-				for (int i = 0; i < 0*num_reactions; i++)
-				{
-					tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -3 * ALPHA);
-					tecido.accumulate(choice[1], choice[2], choice[3], "Na_o", 3 * ALPHA);
-					tecido.accumulate(choice[1], choice[2], choice[3], "K_o", -2 * ALPHA);
-					tecido.accumulate(choice[1], choice[2], choice[3], "K_i", 2 * ALPHA);
+			// 	// cout << "NKP functioning..." << endl;
+			// 	for (int i = 0; i < 0*num_reactions; i++)
+			// 	{
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "Na_i", -3 * ALPHA);
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "Na_o", 3 * ALPHA);
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "K_o", -2 * ALPHA);
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "K_i", 2 * ALPHA);
 
-					tecido.accumulate(choice[1], choice[2], choice[3], "ATP", -ALPHA);
-					tecido.accumulate(choice[1], choice[2], choice[3], "ADP", ALPHA);
-				}			
-				current_time_NKATP += tau_NKATP;
-				current_time_NKATP_AUX += tau_NKATP;
-				// cout << setprecision(10) << "Tau NKP: " << tau_NKATP << endl;
-				// cout << setprecision(10) << "Tau MAX: " << tau_max << endl;
-			}
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "ATP", -ALPHA);
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "ADP", ALPHA);
+			// 	}			
+			// 	current_time_NKATP += tau_NKATP;
+			// 	current_time_NKATP_AUX += tau_NKATP;
+			// 	// cout << setprecision(10) << "Tau NKP: " << tau_NKATP << endl;
+			// 	// cout << setprecision(10) << "Tau MAX: " << tau_max << endl;
+			// }
 
 			/* CP Reaction */
-			if (current_time_CP < tau_max) 
-			{
-				choice = gillespie.CP_reaction();
-				tau_CP = choice[4];
+			// if (current_time_CP < tau_max) 
+			// {
+			// 	choice = gillespie.CP_reaction();
+			// 	tau_CP = choice[4];
 
-				// cout << "Ca pump functioning..." << endl;
-				for (int i = 0; i < 0*num_reactions; i++)
-				{
-					tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
-					tecido.accumulate(choice[1], choice[2], choice[3], "C_o", ALPHA);
+			// 	// cout << "Ca pump functioning..." << endl;
+			// 	for (int i = 0; i < 0*num_reactions; i++)
+			// 	{
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "C", -ALPHA);
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "C_o", ALPHA);
 
-					tecido.accumulate(choice[1], choice[2], choice[3], "ATP", -ALPHA);
-					tecido.accumulate(choice[1], choice[2], choice[3], "ADP", ALPHA);
-				}
-				E_noise = E_noise + pow(ALPHA,2);
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "ATP", -ALPHA);
+			// 		tecido.accumulate(choice[1], choice[2], choice[3], "ADP", ALPHA);
+			// 	}
+			// 	E_noise = E_noise + pow(ALPHA,2);
 
-				current_time_CP += tau_CP;
-				current_time_CP_aux += tau_CP;
-				// cout << setprecision(10) << "Tau CP: " << tau_CP << endl;
-			}
+			// 	current_time_CP += tau_CP;
+			// 	current_time_CP_aux += tau_CP;
+			// 	// cout << setprecision(10) << "Tau CP: " << tau_CP << endl;
+			// }
 
 			/* Getting Tau Max and Updating time for new iteration */
 			//cout << setprecision(5) << "C = " << tecido.get(choice[1], choice[2], choice[3], "C") << endl;
@@ -1957,8 +1955,8 @@ void simulation(int destination, double frequency, string topology, double time_
 			C_tx.push_back(tecido.get(tx_x, tx_y, tx_z, "C"));
 			C_rx.push_back(tecido.get(tx_x + destination, tx_y, tx_z, "C"));
 
-			// || current_time_sodium_inter<tau_max 
-		} while (current_time_calcium < tau_max || current_time_NCX < tau_max || current_time_NKATP < tau_max || current_time_CP < tau_max);
+			// || current_time_NKATP < tau_max || current_time_CP < tau_max
+		} while (current_time_calcium < tau_max || current_time_sodium_inter<tau_max || current_time_NCX < tau_max);
 
 		// /* DIFFUSION ERROR => NO INCREMENT TIME */
 		// if (tau_calcium == 0) current_time -= (tau_max * 1000); //(tau_NCX == 0 &&  && tau_CP == 0)  && tau_sodium_inter == 0 && tau_NKATP == 0 
@@ -1969,7 +1967,7 @@ void simulation(int destination, double frequency, string topology, double time_
 	double acc_c_tx = accumulate(C_tx.begin(), C_tx.end(), 0.0);
 	double acc_c_rx = accumulate(C_rx.begin(), C_rx.end(), 0.0);
 
-	cout << "E_signal = " << E_signal << "; E_noise = " << E_noise << endl;
+	// cout << "E_signal = " << E_signal << "; E_noise = " << E_noise << endl;
 
 	double calc_SNR = 10 * log10(E_signal / E_noise);
 	double calc_gain = 10 * log10((acc_c_rx / C_rx.size()) / ((acc_c_tx) / C_tx.size()));
@@ -1985,12 +1983,12 @@ void simulation(int destination, double frequency, string topology, double time_
 	
 	tecido.demodulation(Rx_states, Tx_id, Rx_id, total_reactions, time_size);
 
-	cout << "Rx States: ";
-	for (int k = 0; k < time_size; k++)
-	{
-		cout << Rx_states[k];
-	}
-	cout << endl;
+	// cout << "Rx States: ";
+	// for (int k = 0; k < time_size; k++)
+	// {
+	// 	cout << Rx_states[k];
+	// }
+	// cout << endl;
 
 	/* ### DEMODULATION - END ### */
 
@@ -2004,13 +2002,13 @@ void simulation(int destination, double frequency, string topology, double time_
 	
 	vector<double> channel_capacity, BER;
 
-	cout << "Tx: ";
+	// cout << "Tx: ";
 
-	for (int j = 0; j < time_size; j++)
-	{
-		cout << Tx_states[j]; 
-	}
-	cout << endl;
+	// for (int j = 0; j < time_size; j++)
+	// {
+	// 	cout << Tx_states[j]; 
+	// }
+	// cout << endl;
 	
 	// cout << "Time_slot_number: " << time_slots_number << endl;
 	
@@ -2076,7 +2074,7 @@ void simulation(int destination, double frequency, string topology, double time_
 
 	/* DUMP RESULTS */
 	
-	cout << "Saving results..." << endl;
+	// cout << "Saving results..." << endl;
 
 	file_results << frequency << "," << destination << "," << time_slot << "," << calc_gain <<  "," << calc_SNR << "," << mean_channel_capacity << "," << mean_BER << ",\n";
 	
@@ -2095,13 +2093,17 @@ int main()
 
 	// Mean results
 	ofstream file_results;
-	string fileName = "NCX_NKP_CP";
+	string fileName = "Na_NCX";
+
+	cout << "File Name: " << fileName << ", Simulation Number: ";
 
 	file_results.open("results/" + fileName + ".csv");
 	file_results << "Freq (Hz),Range,Time Slot (s),Gain (dB),SNR (dB),Channel Capacity (bits),BER,\n";
 
 	for (int j = 0; j < simulation_number; j++)
 	{
+		cout << j << endl;
+
 		for (double frequency : frequencies)
 		{
 			for (int destination = 1; destination < 7; destination++)

@@ -44,7 +44,7 @@ lineColor          = ['#FF0000', '#FFA500', '#FFFF00', '#008000', '#8B4513', '#0
 fileName           = "NCX_NKP_CP.csv"
 
 ### Creating DataFrame from CSV file ###
-results            = pd.read_csv("results/" + fileName                               )
+results            = pd.read_csv("results/" + fileName)
 
 ### Processing data ###
 resultsMean        = results.groupby(['Freq (Hz)', 'Range', 'Time Slot (s)']).mean()
